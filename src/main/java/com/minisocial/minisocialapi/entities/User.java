@@ -1,9 +1,21 @@
-package com.minisocial.minisocialapi.entity;
+package com.minisocial.minisocialapi.entities;
 
+import com.minisocial.minisocialapi.dtos.UserDTO;
+import com.minisocial.minisocialapi.enums.USER_ROLE;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.HashSet;
+
 import java.io.Serializable;
+import java.util.Set;
+
+import com.minisocial.minisocialapi.entities.notification.Notification;
+
+
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Locale;
 import java.util.Set;
 
 @Entity
@@ -35,7 +47,8 @@ public class User implements Serializable {
     @NotNull
     @Column(nullable = false)
     private String role;
-    
+
+
     @OneToMany(mappedBy = "user")
     private Set<Post> posts;
     
@@ -52,10 +65,24 @@ public class User implements Serializable {
         inverseJoinColumns = @JoinColumn(name = "friend_id")
     )
     private Set<User> friends;
+
+    //groups that the user is offically member of
+    @OneToMany(mappedBy = "user")
+    private Set<UserGroup> userGroups;
+
+
+    @ManyToMany
+    @JoinTable(name = "group_join_requests", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "group_id"))
+    private Set<Group> requestedGroups;
+
     
-    @ManyToMany(mappedBy = "members")
-    private Set<Group> groups;
+    // @ManyToMany(mappedBy = "members")
+    // private Set<Group> groups;
     
+    //change by @Abdelrahman map relationship with Notification
+    @OneToMany(mappedBy = "recipient", cascade = CascadeType.ALL)
+    private Set<Notification> notifications ;
+
     public User() {
     }
     
@@ -148,11 +175,37 @@ public class User implements Serializable {
         this.friends = friends;
     }
 
-    public Set<Group> getGroups() {
-        return groups;
+    public Set<UserGroup> getGroups() {
+        return userGroups;
     }
 
-    public void setGroups(Set<Group> groups) {
-        this.groups = groups;
+    public void setGroups(Set<UserGroup> groups) {
+        this.userGroups = groups;
     }
+
+    public Set<Notification> getNotifications() {
+        return notifications;
+    }
+
+    public void setNotifications(Set<Notification> notifications) {
+        this.notifications = notifications;
+    }
+
+    // helprs
+
+    public boolean hasValidRole() {
+        return Arrays.stream(USER_ROLE.values()).anyMatch(r -> r.name().toLowerCase(Locale.ROOT).equals(role));
+    }
+
+    public UserDTO toDTO() {
+        return new UserDTO(id, name, email, role, bio);
+    }
+    public Set<Group> getRequestedGroups() {
+        return requestedGroups;
+    }
+
+    public void setRequestedGroups(Set<Group> requestedGroups) {
+        this.requestedGroups = requestedGroups;
+    }
+
 }

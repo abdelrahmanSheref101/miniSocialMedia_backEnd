@@ -1,10 +1,11 @@
-package com.minisocial.minisocialapi.entity;
+package com.minisocial.minisocialapi.entities;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -39,7 +40,10 @@ public class Post implements Serializable {
     
     @OneToMany(mappedBy = "post")
     private Set<Comment> comments;
-    
+
+
+    // a logic for making sure a user doesn't add more than one like to the same post must be applied(manual code validation)
+    // since we don't have a mechanism to add a composite pk on user_id, post_id
     @ManyToMany
     @JoinTable(
         name = "post_likes",
@@ -47,13 +51,16 @@ public class Post implements Serializable {
         inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private Set<User> likes;
-    
+
     public Post() {
         this.createdAt = LocalDateTime.now();
     }
     
     public Post(String content, User user) {
         this.createdAt = LocalDateTime.now();
+        if(content == null || content.isEmpty()){
+            throw new IllegalArgumentException("Content cannont be empty");
+        }
         this.content = content;
         this.user = user;
     }
@@ -122,6 +129,13 @@ public class Post implements Serializable {
 
     public void setComments(Set<Comment> comments) {
         this.comments = comments;
+    }
+
+    public void addComment(Comment comment) {
+        if(this.comments == null) {
+            this.comments = new HashSet<Comment>();
+        }
+        this.comments.add(comment);
     }
 
     public Set<User> getLikes() {
